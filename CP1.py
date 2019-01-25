@@ -5,9 +5,10 @@ import matplotlib.animation as animation
 
 class IsingModel():
 
-	def __init__(self, N, T):
+	def __init__(self, N, T, J = 1):
 		self.N = N
 		self.T = T
+		self.J = J
 		self.plotFigure = plt.figure()
 		self.make_array()
 
@@ -41,11 +42,10 @@ class IsingModel():
 		x_minus_1 = x - 1 #if x or y is 0 then -1 indexes to last entry in array so loops over
 		y_minus_1 = y - 1
 
-		self.E = (self.test_array[x_plus_1, y]*i + self.test_array[x_minus_1,y]*i
-				+ self.test_array[x, y_plus_1]*i + self.test_array[x,y_minus_1]*i)
+		self.E = - self.J * i * (self.test_array[x_plus_1, y] + self.test_array[x_minus_1,y]
+				+ self.test_array[x, y_plus_1] + self.test_array[x,y_minus_1])
 
 		return self.E
-
 
 	def get_probability(self, E):
 		if E <= 0:
@@ -86,6 +86,7 @@ class IsingModel():
 		self.flip_spin(self.x, self.y)
 		E_2 = self.get_E(self.x, self.y)
 		self.get_probability(E_2-E_1)
+		self.test_array = np.copy(self.array)
 
 	def Kawasaki(self):
 		self.get_i()
@@ -98,9 +99,10 @@ class IsingModel():
 			pass
 
 	def updatePlot(self,i):
-	    self.Kawasaki()
-	    self.plotFigure.clear()# Clear the old plot
-	    plt.imshow(self.array, interpolation = "nearest", cmap = "binary")# Make the new plot
+		for i in range (2500):
+			self.Kawasaki()
+		self.plotFigure.clear()# Clear the old plot
+		plt.imshow(self.array, interpolation = "nearest", cmap = "binary")# Make the new plot
 
 	def Visualise(self):# Function that runs the animaion
 		# self.make_array()
@@ -112,9 +114,9 @@ class IsingModel():
 # IsingModel(50,1).Visualise()
 x = IsingModel(50,0.01)
 # x.make_array()
-# for i in range(1000000):
-# 	x.Kawasaki()
-# plt.imshow(x.array, interpolation = "nearest", cmap = "binary")
-# plt.show()
+for i in range(100000):
+	x.Kawasaki()
+plt.imshow(x.array, interpolation = "nearest", cmap = "binary")
+plt.show()
 
-x.Visualise()
+# x.Visualise()
