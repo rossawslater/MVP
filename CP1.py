@@ -5,18 +5,29 @@ import matplotlib.animation as animation
 import sys
 
 class IsingModel():
-	#sys argumets N, T , dynamics
-	def __init__(self):#, N, T, random = True, J = 1):
-		self.N = int(sys.argv[1])
-		self.T = float(sys.argv[2])
-		self.J = 1
+
+	def __init__(self, N, T, dynamics, init_state, J = 1):
+		self.N = N
+		self.T = T
+		self.J = J
 		self.plotFigure = plt.figure()
 
-		if sys.argv[3] == "Random":
+		if init_state == "Random":
 			self.initalize_random()
-
-		if sys.argv[3] == "Uniform":
+		elif init_state == "Uniform":
 			self.initalize_uniform()
+		else:
+			print "Input Error"
+			exit()
+
+		if dynamics == "Glauber":
+			self.update = self.Glauber
+		elif dynamics == "Kawasaki":
+			self.update = self.Kawasaki
+		else:
+			print "Input Error"
+			exit()
+
 
 	def initalize_uniform(self):
 		self.array = np.ones([self.N, self.N])
@@ -34,8 +45,14 @@ class IsingModel():
 		self.x = i[0]; self.y = i[1]
 		return self.x, self.y
 
-	def flip_spin(self):#, x, y):
-		self.array[self.x, self.y] *= -1
+	def get_i_and_j(self):  ################## not self? 
+		r = np.random.randint(0,self.N,(4))
+		self.i_x = r[0]; self.i_y = r[1]
+		self.j_x = r[2]; self.j_y = r[3]
+		return r[0], r[1], r[2], r[3]
+
+	def flip_spin(self, x, y):#, x, y):
+		self.array[x,y] *= -1
 
 	def get_flip_E(self, x, y):
 
@@ -60,7 +77,7 @@ class IsingModel():
 
 		E_i = i * nn_sum
 
-		i *= -1
+		i *= -1 #flip i spin
 
 		E_f = i * nn_sum
 
@@ -71,67 +88,66 @@ class IsingModel():
 		p = np.exp(-E/self.T)
 
 		if E <= 0:
-			self.flip_spin()
+			return True
 		elif r <= p:
-			self.flip_spin()
+			return True
 		else:
-			pass
+			return False
 
 	def Glauber(self):
-		x, y = self.get_i()
+		# x, y = self.get_i()
+		x,y,_,_ = self.get_i_and_j()
 		E_i, E_f = self.get_flip_E(x,y)
-		self.get_probability(-E_f+E_i)
-
-
-	def swap_spins(self):
-
-		self.test_array = np.copy(self.array)
-
-		r = np.random.randint(0,self.N,(4))
-
-		self.i_x = r[0]; self.i_y = r[1]
-		self.j_x = r[2]; self.j_y = r[3]
-
-
-		# self.array[self.i_x, self.i_y], self.array[self.j_x, self.j_y] = self.array[self.j_x, self.j_y], self.array[self.i_x, self.i_y]
-		i = self.array[self.i_x, self.i_y]
-		j = self.array[self.j_x, self.j_y]
-
-		self.test_array[self.i_x, self.i_y] = j
-		self.test_array[self.j_x, self.j_y] = i
-
-		self.i = i#self.test_array[self.j_x, self.j_y]
-		self.j = j#self.test_array[self.i_x, self.i_y]
+		if self.get_probability(-E_f+E_i) == True:
+			# self.flip_spin(self.x,self.y)
+			self.flip_spin(x,y)
 
 	def Kawasaki(self):
-		self.get_i()
-		self.swap_spins()
-		if self.i != self.j:
-			E_i = self.get_E(self.i_x, self.i_y)
-			E_j = self.get_E(self.j_x, self.j_y)
-			self.get_probability(E_j + E_j)
+		self.get_i_and_j()
+		if self.array[self.i_x, self.i_y] != self.array[self.j_x, self.j_y]:
+			E_1_init, E_1_final = self.get_flip_E(self.i_x, self.i_y)
+			E_2_init, E_2_final = self.get_flip_E(self.j_x, self.j_y)
+			if self.get_probability(-E_1_final + E_1_init + -E_2_final + E_2_init) == True:
+				self.flip_spin(self.i_x, self.i_y)
+				self.flip_spin(self.j_x, self.j_y)
 		else:
 			pass
 
 	def updatePlot(self,i):
 		for i in range (2500):
-			# self.Kawasaki()
-			self.Glauber()
+			self.update()
 		self.plotFigure.clear()# Clear the old plot
 		plt.imshow(self.array, interpolation = "nearest", cmap = "binary")# Make the new plot
+		plt.axis('off')
 
 	def Visualise(self):# Function that runs the animaion
 		ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
 		plt.show()
 
 
+class Experiments():
 
-# IsingModel(50,1).Visualise()
-x = IsingModel()#50,2.7)
-# x.make_array()
-# for i in range(100000):
-# 	x.Glauber()
-# plt.imshow(x.array, interpolation = "nearest", cmap = "binary")
-# plt.show()
-#
-x.Visualise()
+	def __init__(self, N):
+		self.N = N
+		self.Magnetisation = []
+		self.Energy = []
+
+	def vary_T(self, min = 1, max = 3):
+		T_vals = np.linspace(min,max,0.1)
+		# self.IsingModel()
+
+		for T in T_vals:
+			sim = IsingModel(self.N, self.T)
+			for i in range(self.N*100):
+				pass
+
+
+def main():
+	N = int(sys.argv[1])
+	T = float(sys.argv[2])
+	dynamics = sys.argv[3]
+	init_state = sys.argv[4]
+
+	IsingModel(N,T,dynamics,init_state).Visualise()
+
+main()
