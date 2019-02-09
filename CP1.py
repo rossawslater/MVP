@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import sys
+import datetime
 
 class IsingModel():
 
@@ -136,41 +137,75 @@ class Experiments():
 
 	def __init__(self, N, dynamics):
 		self.N = N
+
 		self.Magnetisation = []
+
 		self.Energy = []
 		self.dynamics = dynamics
 		self.init_state = "Uniform"
+		self.Chi = []
+		self.C = []
 
 	def get_M(self,array):
-		self.Magnetisation.append(np.sum(array))
-		# return np.sum(array)
-	def get_chi(self,M_vals,T):
-		chi = 1/(self.N,T)
+		return np.sum(array)
+
+	def get_Chi(self,M_Vals,T):
+		return (np.mean(M_Vals**2) - np.mean(M_Vals)**2)/(self.N * T)
+
+	def get_C(self,E_Vals,T):
+		return (np.mean(E_Vals**2) - np.mean(E_Vals)**2)/(self.N * (T**2))
+
+	def get_E(self):
+		E = 0
+		for i in range(self.N):
+			for j in range(self.N):
+				E_i,_  = self.sim.get_flip_E(i,j)
+				E += E_i
+		return E/2
+
 	def vary_T(self, min = 1, max = 3):
-		# T_vals = np.linspace(min,max,(max-min)/0.1)
-		T_vals = [2.7]
+		T_vals = np.arange(min,max,0.1)
+		# T_vals = [2.7]
+		step = 0
+		self.Magnetisation = np.zeros((len(T_vals), 1000))
+		self.Energy = np.zeros((len(T_vals), 1000))
 
 		for T in T_vals:
-
-			sim = IsingModel(self.N, T, self.dynamics, self.init_state)
+			# T /= 10
+			self.sim = IsingModel(self.N, T, self.dynamics, self.init_state)
 
 			for sweep in range(100): #equlibriate
 				for i in range(self.N**2):
-					sim.update()
-				print "Equlibrium sweep", sweep
-			#equlibriated
+					self.sim.update()
 
-			for sweep in range(10000): #equlibriate
-				for i in range(self.N**2):
-					sim.update()
-				if sweep%10 == 0:
-					self.get_M(sim.array)
-				print sweep
-			#finished 1 T_val sample
+			for sweep in range(10000): #run 10000 sweep sample
+				for i in range(self.N**2): #sweep is N^2 updates
+					self.sim.update()
+				if sweep%10 == 0: #measure every 10 sweeps
+					self.Magnetisation[step,sweep/10] = self.get_M(self.sim.array)
+					self.Energy[step,sweep/10] = self.get_E()
 
-		print self.Magnetisation
+			print step,T
+			self.Chi.append(self.get_Chi(self.Magnetisation[step,:], T))
+			self.C.append(self.get_C(self.Energy[step,:], T))
+			step += 1 #finished 1 T_val sample
+
+		print self.Chi
+		print self.C
+		date_time = str(datetime.datetime.now())
+		print date_time
+		np.savetxt(str("Data/Energy " + date_time +  ".txt"), self.Energy)
+		np.savetxt(str("Data/Magnetisation " + date_time +  ".txt"), self.Magnetisation)
+		np.savetxt(str("Data/Suscepibility " + date_time +  ".txt"), self.Chi)
+		np.savetxt(str("Data/Heat Capacity " + date_time +  ".txt"), self.C)
+
+		# print self.Magnetisation
 		print len(self.Magnetisation)
 		print np.mean(self.Magnetisation)
+		# print self.Energy
+		print len(self.Energy)
+		print np.mean(self.Energy)
+
 				# else:
 				# 	print "Pass"
 
