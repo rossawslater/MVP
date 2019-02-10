@@ -29,17 +29,16 @@ class IsingModel():
 			print "Input Error"
 			exit()
 
+		# if type(N) or type(T) != float():
+		# 	print "Input Error"
+		# 	exit()
+
 	def initalize_uniform(self, dynamics):
-		# if dynamics == "Glauber":
 		self.array = np.ones([self.N, self.N])
 		if dynamics == "Kawasaki":
-			self.array = np.ones([self.N, self.N])
 			for i in range(self.N):
-				for j in range(self.N):
-					if j <= self.N/2:
-						self.array[i,j] = 1#np.ones([self.N, self.N]) #change to half and half for kawasaki?
-					else:
-						self.array[i,j] = -1 #np.ones([self.N, self.N]) #change to half and half for kawasaki?
+				for j in range(self.N/2):
+						self.array[i,j] = -1
 
 	def initalize_random(self):
 		self.array = np.zeros([self.N, self.N])
@@ -50,10 +49,10 @@ class IsingModel():
 	def get_x_y(self):
 		return np.random.randint(0,self.N), np.random.randint(0,self.N)
 
-	def flip_spin(self, x, y):#, x, y):
+	def flip_spin(self, x, y):
 		self.array[x,y] *= -1
 
-	def get_flip_E(self, x, y):
+	def get_dE(self, x, y):
 
 		i = self.array[x, y]
 
@@ -78,7 +77,7 @@ class IsingModel():
 
 		E_f = - i * nn_sum #flip spin of i
 
-		return E_i, E_f
+		return -E_f + E_i
 
 	def get_probability(self, E):
 		r = np.random.rand()
@@ -93,22 +92,19 @@ class IsingModel():
 
 	def Glauber(self):
 		x,y = self.get_x_y()
-		E_i, E_f = self.get_flip_E(x,y)
-		if self.get_probability(-E_f+E_i) == True:
+		dE = self.get_dE(x,y)
+		if self.get_probability(dE) == True:
 			self.flip_spin(x,y)
 		else:
 			pass
 
 	def Kawasaki(self):
-
 		i_x, i_y = self.get_x_y()
 		j_x, j_y = self.get_x_y()
-
 		if self.array[i_x,i_y] != self.array[j_x,j_y]:
-			E_1_init, E_1_final = self.get_flip_E(i_x,i_y)
-			E_2_init, E_2_final = self.get_flip_E(j_x,j_y)
-
-			if self.get_probability(-E_1_final + E_1_init + -E_2_final + E_2_init) == True:
+			dE_1 = self.get_dE(i_x,i_y)
+			dE_2 = self.get_dE(j_x,j_y)
+			if self.get_probability(dE_1 + dE_2) == True:
 				self.flip_spin(i_x,i_y)
 				self.flip_spin(j_x,j_y)
 		else:
@@ -125,36 +121,30 @@ class IsingModel():
 		ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
 		plt.show()
 
-	def get_E_no_DC(self, x, y): #move to Experiments class
-
-		i = self.array[x, y]
-
-		if x == self.N-1: #boundary conditions so nearest neighbor loops over at far edge
-			x_plus_1 = 0
-		else:
-			x_plus_1 = x + 1
-
-		if y == self.N-1:
-			y_plus_1 = 0
-		else:
-			y_plus_1 = y + 1
-
-		E = i * np.sum(np.array([self.array[x_plus_1, y], self.array[x, y_plus_1]])) #spin of i * sum of neaest neighbor spins
-
-		return E
+	# def get_E_no_DC(self, x, y): #move to Experiments class
+	# 	i = self.array[x, y]
+	#
+	# 	if x == self.N-1: #boundary conditions so nearest neighbor loops over at far edge
+	# 		x_plus_1 = 0
+	# 	else:
+	# 		x_plus_1 = x + 1
+	#
+	# 	if y == self.N-1:
+	# 		y_plus_1 = 0
+	# 	else:
+	# 		y_plus_1 = y + 1
+	#
+	# 	E = i * np.sum(np.array([self.array[x_plus_1, y], self.array[x, y_plus_1]])) #spin of i * sum of neaest neighbor spins
+	#
+	# 	return E
 
 class Experiments():
 
-	def __init__(self, N, dynamics, min = 1, max = 3):
+	def __init__(self, N, dynamics, min = 1, max = 3, step = 0.1):
 		self.N = N
-		self.T_vals = np.arange(min,max,0.1)
-		self.Magnetisation = []
-
-		self.Energy = []
+		self.T_vals = np.arange(min,max,step)
 		self.dynamics = dynamics
 		self.init_state = "Uniform" #just define in instance of creating object?
-		self.Chi = []
-		self.C = []
 
 	def get_M(self,array):
 		return np.sum(array)
@@ -162,55 +152,81 @@ class Experiments():
 	def get_Chi(self,M_Vals,T):
 		return (np.mean(M_Vals**2) - np.mean(M_Vals)**2)/(self.N * T)
 
-	def get_total_E(self):
+	def get_total_E(self, array):
 		E = 0
-		for i in range(self.N):
-			for j in range(self.N):
-				E += self.sim.get_E_no_DC(i,j)
+		for x in range(self.N):
+			for y in range(self.N):
+				s = array[x, y]
 
-		return E #need function that only calculates E for two neaest neighbours
+				if x == self.N-1: #boundary conditions so nearest neighbor loops over at far edge
+					x_plus_1 = 0
+				else:
+					x_plus_1 = x + 1
+
+				if y == self.N-1:
+					y_plus_1 = 0
+				else:
+					y_plus_1 = y + 1
+
+				E += s * np.sum(np.array([array[x_plus_1, y], array[x, y_plus_1]])) #spin of i * sum of neaest neighbor spins
+
+		return E
 
 	def get_C(self,E_Vals,T):
 		return (np.mean(E_Vals**2) - np.mean(E_Vals)**2)/(self.N * (T**2))
 
 	def vary_T(self):
-		step = 0
 		self.Magnetisation = np.zeros((len(self.T_vals), 1000))
 		self.Energy = np.zeros((len(self.T_vals), 1000))
+		self.Chi = []
+		self.C = []
 
+		equlibrium_sweeps = 100
+		measurement_sweeps = 10000
+
+		sweep_counter = 0
+
+		step = 0
 		for T in self.T_vals:
 
 			self.sim = IsingModel(self.N, T, self.dynamics, "Uniform")
 
-			for sweep in range(100):  #equlibriate
+			for sweep in range(equlibrium_sweeps):  #equlibriate
 				for i in range(self.N**2):
 					self.sim.update()
 
-			for sweep in range(10000): #run 10000 sweep sample
+				sweep_counter += 1
+				sys.stdout.write(" Simulation progress: %.2f%%   \r" %(sweep_counter*100/float(len(self.T_vals)*(equlibrium_sweeps+measurement_sweeps))))
+				sys.stdout.flush()
+
+			for sweep in range(measurement_sweeps): #run 10000 sweep sample
 				for i in range(self.N**2): #sweep is N^2 updates
 					self.sim.update()
+
 				if sweep%10 == 0: #measure every 10 sweeps
 					self.Magnetisation[step,sweep/10] = self.get_M(self.sim.array)
-					self.Energy[step,sweep/10] = self.get_total_E() #need function that gets only one horizontal and one vertical nn Energy
+					self.Energy[step,sweep/10] = self.get_total_E(self.sim.array)
+
+				sweep_counter += 1
+				sys.stdout.write(" Simulation progress: %.2f%%   \r" %(sweep_counter*100/float(len(self.T_vals)*(equlibrium_sweeps+measurement_sweeps))))
+				sys.stdout.flush()
 
 			self.Chi.append(self.get_Chi(self.Magnetisation[step,:], T))
 			self.C.append(self.get_C(self.Energy[step,:], T))
-			print step
-			step += 1 #finished measurements for one value of T
 
-			# sys.stdout.write(" Simulation progress: %.1f%%   \r" %(t*100/float(self.sim_length)))
-			# sys.stdout.flush()
+			step += 1 #finished measurements for one value of T ***ONLY used for tracking in terminal output***
+
 		return self.Energy, self.Magnetisation, self.C, self.Chi
 
 
-	def get_error(self, Data, func): #using bootstrap algorithm
+	def get_error(self, Data, func): #using bootstrap algorithm ***DECIDE IF ALL self. OR NOT***
 		no_steps = len(Data) #give better name
 		no_new_measurements = 100 #define what this should be
 		no_measurements = len(Data[0])
 		new_measurements = np.zeros((no_steps, no_new_measurements))
 		new_samples = np.zeros((no_steps, no_measurements))
 		stdevs = np.zeros((no_steps))
-		self.T_vals = np.arange(1,3,0.1) #draw this from
+		# self.T_vals = np.arange(1,3,0.1) #draw this from
 
 		for i in range(no_steps):
 			for k in range(no_new_measurements): #define what this should be, 100?
@@ -232,17 +248,26 @@ class Experiments():
 		for i in range(len(self.Energy)):
 			mean_E.append(np.mean(self.Energy[i]))
 
+		return mean_E, mean_M
+
+	def get_mean_vals(self, Data):
+		means_vals = []
+		for i in range(len(Data)):
+			mean_vals.append(np.mean(Data[i]))
+
+		return mean_vals
+
+	def output(self):
+		pass
+
 def main():
 	N = int(sys.argv[1])
 	T = float(sys.argv[2])
 	dynamics = sys.argv[3]
 	init_state = sys.argv[4]
 
-	IsingModel(N,T,dynamics,init_state).Visualise()
-	# x = Experiments(N,dynamics)
-	#
-	#
-	# Energy, Magnetisation, C, Chi = x.vary_T()
+	# IsingModel(N,T,dynamics,init_state).Visualise()
+	Energy, Magnetisation, C, Chi =  Experiments(N,dynamics).vary_T()
 	#
 	# date_time = str(datetime.datetime.now())
 	# np.savetxt(str("Data/Energy " + date_time +  ".txt"), Energy)
