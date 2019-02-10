@@ -42,16 +42,13 @@ class IsingModel():
 		self.test_array = np.copy(self.array)
 
 	def get_x_y(self):
-		# i = np.random.randint(0,self.N,(2))
-		# self.x = i[0]; self.y = i[1]
-		# return self.x, self.y
 		return np.random.randint(0,self.N), np.random.randint(0,self.N)
 
-	def get_i_and_j(self):  ################## not self?  # tidy so no using self  shouldn't need, just call get i twoice
-		r = np.random.randint(0,self.N,(4))
-		self.i_x = r[0]; self.i_y = r[1]
-		self.j_x = r[2]; self.j_y = r[3]
-		return r[0], r[1], r[2], r[3]
+	# def get_i_and_j(self):  ################## not self?  # tidy so no using self  shouldn't need, just call get i twoice
+	# 	r = np.random.randint(0,self.N,(4))
+	# 	self.i_x = r[0]; self.i_y = r[1]
+	# 	self.j_x = r[2]; self.j_y = r[3]
+	# 	return r[0], r[1], r[2], r[3]
 
 	def flip_spin(self, x, y):#, x, y):
 		self.array[x,y] *= -1
@@ -79,7 +76,7 @@ class IsingModel():
 
 		E_i = i * nn_sum
 
-		i *= -1 #flip i spin
+		i *= -1 #temporary spin flip of spin of interest
 
 		E_f = i * nn_sum
 
@@ -97,17 +94,15 @@ class IsingModel():
 			return False
 
 	def Glauber(self):
-		# x, y = self.get_i()
-		# x,y,_,_ = self.get_i_and_j()
 		x,y = self.get_x_y()
 		E_i, E_f = self.get_flip_E(x,y)
 		if self.get_probability(-E_f+E_i) == True:
-			# self.flip_spin(self.x,self.y)
 			self.flip_spin(x,y)
+		else:
+			pass
 
 	def Kawasaki(self):
 
-		# self.get_i_and_j()
 		i_x, i_y = self.get_x_y()
 		j_x, j_y = self.get_x_y()
 
@@ -132,6 +127,29 @@ class IsingModel():
 		ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
 		plt.show()
 
+	def get_E_no_DC(self, x, y):
+
+		i = self.array[x, y]
+
+		if x == self.N-1: #boundary conditions so nearest neighbor loops over at far edge
+			x_plus_1 = 0
+		else:
+			x_plus_1 = x + 1
+
+		if y == self.N-1:
+			y_plus_1 = 0
+		else:
+			y_plus_1 = y + 1
+
+		# neighbors = np.array([self.array[x_plus_1, y], self.array[x, y_plus_1]])
+		#
+		# nn_sum = np.sum(neighbors)
+		#
+		# E = i * nn_sum
+
+		E = i * np.sum(np.array([self.array[x_plus_1, y], self.array[x, y_plus_1]]))
+
+		return E
 
 class Experiments():
 
@@ -142,7 +160,7 @@ class Experiments():
 
 		self.Energy = []
 		self.dynamics = dynamics
-		self.init_state = "Uniform"
+		self.init_state = "Uniform" #just define in instance of creating object?
 		self.Chi = []
 		self.C = []
 
@@ -155,26 +173,33 @@ class Experiments():
 	def get_C(self,E_Vals,T):
 		return (np.mean(E_Vals**2) - np.mean(E_Vals)**2)/(self.N * (T**2))
 
+	# def get_E(self):
+	# 	E = 0
+	# 	for i in range(self.N):
+	# 		for j in range(self.N):
+	# 			E_i,_  = self.sim.get_flip_E(i,j)
+	# 			E += E_i
+	# 	return E/2 #need function that only calculates E for two neaest neighbours
+
 	def get_E(self):
 		E = 0
 		for i in range(self.N):
 			for j in range(self.N):
-				E_i,_  = self.sim.get_flip_E(i,j)
-				E += E_i
-		return E/2
+				E += self.sim.get_E_no_DC(i,j)
+
+		return E #need function that only calculates E for two neaest neighbours
 
 	def vary_T(self, min = 1, max = 3):
-		T_vals = np.arange(min,max,0.1)
-		# T_vals = [2.7]
+		self.T_vals = np.arange(min,max,0.1)
 		step = 0
-		self.Magnetisation = np.zeros((len(T_vals), 1000))
-		self.Energy = np.zeros((len(T_vals), 1000))
+		self.Magnetisation = np.zeros((len(self.T_vals), 1000))
+		self.Energy = np.zeros((len(self.T_vals), 1000))
 
-		for T in T_vals:
-			# T /= 10
-			self.sim = IsingModel(self.N, T, self.dynamics, self.init_state)
+		for T in self.T_vals:
 
-			for sweep in range(100): #equlibriate
+			self.sim = IsingModel(self.N, T, self.dynamics, "Uniform")
+
+			for sweep in range(100):  #equlibriate
 				for i in range(self.N**2):
 					self.sim.update()
 
@@ -183,31 +208,39 @@ class Experiments():
 					self.sim.update()
 				if sweep%10 == 0: #measure every 10 sweeps
 					self.Magnetisation[step,sweep/10] = self.get_M(self.sim.array)
-					self.Energy[step,sweep/10] = self.get_E()
+					self.Energy[step,sweep/10] = self.get_E() #need function that gets only one horizontal and one vertical nn Energy
 
-			print step,T
 			self.Chi.append(self.get_Chi(self.Magnetisation[step,:], T))
 			self.C.append(self.get_C(self.Energy[step,:], T))
+			print step
 			step += 1 #finished 1 T_val sample
 
-		print self.Chi
-		print self.C
-		date_time = str(datetime.datetime.now())
-		print date_time
-		np.savetxt(str("Data/Energy " + date_time +  ".txt"), self.Energy)
-		np.savetxt(str("Data/Magnetisation " + date_time +  ".txt"), self.Magnetisation)
-		np.savetxt(str("Data/Suscepibility " + date_time +  ".txt"), self.Chi)
-		np.savetxt(str("Data/Heat Capacity " + date_time +  ".txt"), self.C)
+			# sys.stdout.write(" Simulation progress: %.1f%%   \r" %(t*100/float(self.sim_length)))
+			# sys.stdout.flush()
+		return self.Energy, self.Magnetisation, self.C, self.Chi
 
-		# print self.Magnetisation
-		print len(self.Magnetisation)
-		print np.mean(self.Magnetisation)
-		# print self.Energy
-		print len(self.Energy)
-		print np.mean(self.Energy)
 
-				# else:
-				# 	print "Pass"
+	def get_error(self, Data, func): #using bootstrap algorithm
+		no_steps = len(Data) #give better name
+		some_range = 100 #define what this should be
+		no_measurements = len(Data[0])
+		new_measurements = np.zeros((no_steps, some_range))
+		new_samples = np.zeros((no_steps, no_measurements))
+		stdevs = np.zeros((no_steps))
+		self.T_vals = np.arange(1,3,0.1)
+		for i in range(no_steps):
+			for k in range(some_range): #define what this should be, 100?
+				for j in range(no_measurements):
+
+					new_samples[i] = np.random.choice(Data[i], size = len(Data[0]))
+				new_measurements[i,k] = func(new_samples[i], self.T_vals[i])
+
+			stdevs[i] = np.sqrt(np.mean(new_measurements[i]**2) - np.mean(new_measurements[i])**2)
+
+		return stdevs
+
+
+
 
 def main():
 	N = int(sys.argv[1])
@@ -217,5 +250,18 @@ def main():
 
 	# IsingModel(N,T,dynamics,init_state).Visualise()
 	x = Experiments(N,dynamics)
-	x.vary_T()
+
+
+	Energy, Magnetisation, C, Chi = x.vary_T()
+
+	date_time = str(datetime.datetime.now())
+	np.savetxt(str("Data/Energy " + date_time +  ".txt"), Energy)
+	np.savetxt(str("Data/Magnetisation " + date_time +  ".txt"), Magnetisation)
+	np.savetxt(str("Data/Suscepibility " + date_time +  ".txt"), Chi)
+	np.savetxt(str("Data/Heat Capacity " + date_time +  ".txt"), C)
+
+
+	np.savetxt("C_Error.txt", self.get_error(Energy, x.get_C))
+	np.savetxt("Chi_Error.txt", self.get_error(Magnetisation, x.get_Chi))
+
 main()
