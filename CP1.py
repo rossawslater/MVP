@@ -74,7 +74,6 @@ class IsingModel():
 		y_minus_1 = y - 1
 
 		neighbors = np.array([self.array[x_plus_1, y], self.array[x_minus_1,y], self.array[x, y_plus_1], self.array[x,y_minus_1]])
-
 		nn_sum = np.sum(neighbors)
 
 		E_i = i * nn_sum * self.J
@@ -97,6 +96,7 @@ class IsingModel():
 	def Glauber(self):
 		x,y = self.get_x_y()
 		dE = self.get_dE(x,y)
+
 		if self.get_probability(dE) == True:
 			self.flip_spin(x,y)
 		else:
@@ -108,6 +108,7 @@ class IsingModel():
 		if self.array[i_x,i_y] != self.array[j_x,j_y]:
 			dE_1 = self.get_dE(i_x,i_y)
 			dE_2 = self.get_dE(j_x,j_y)
+
 			if self.check_nn(i_x,i_y,j_x,j_y) == True:
 				if self.get_probability(dE_1 + dE_2 + 4) == True:
 						self.flip_spin(i_x,i_y)
@@ -212,14 +213,13 @@ class Experiments():
 		return self.Energy, self.Magnetisation, self.C, self.Chi
 
 
-	def get_error(self, Data, func): #using bootstrap algorithm ***DECIDE IF ALL self. OR NOT***
+	def get_error(self, Data, func): #calculate error on function using bootstrap algorithm
 		no_steps = len(Data) #give better name
 		no_new_measurements = 100 #define what this should be
 		no_measurements = len(Data[0])
 		new_measurements = np.zeros((no_steps, no_new_measurements))
 		new_samples = np.zeros((no_steps, no_measurements))
 		stdevs = np.zeros((no_steps))
-		# self.T_vals = np.arange(1,3,0.1) #draw this from
 
 		for i in range(no_steps):
 			for k in range(no_new_measurements): #define what this should be, 100?
@@ -231,16 +231,16 @@ class Experiments():
 
 		return stdevs
 
-	def get_mean_vals(self):
-		mean_M = []
-		for i in range(len(self.Magnetisation)):
-			mean_M.append(np.mean(self.Magnetisation[i])) #absolute value of mean of magnetisation
-
-		mean_E = []
-		for i in range(len(self.Energy)):
-			mean_E.append(np.mean(self.Energy[i]))
-
-		return mean_E, mean_M
+	# def get_mean_vals(self):
+	# 	mean_M = []
+	# 	for i in range(len(self.Magnetisation)):
+	# 		mean_M.append(np.mean(self.Magnetisation[i])) #absolute value of mean of magnetisation
+	#
+	# 	mean_E = []
+	# 	for i in range(len(self.Energy)):
+	# 		mean_E.append(np.mean(self.Energy[i]))
+	#
+	# 	return mean_E, mean_M
 
 	def get_mean_vals(self, Data):
 		means_vals = []
@@ -250,40 +250,35 @@ class Experiments():
 		return mean_vals
 
 
-	# def updatePlot(self,i): #move to plotting class?
-	# 	# for sweep in range(10):
-	# 	# 	for i in range(self.N**2):
-	# 	# 		self.update()
-	# 	self.plotFigure.clear()# Clear the old plot
-	# 	plt.imshow(self.sim.array, interpolation = "nearest", cmap = "binary")# Make the new plot
-	# 	plt.axis('off')
-	#
-	# def Visualise(self):# Function that runs the animaion
-	# 	# self.sim = IsingModel(self.N, T, self.dynamics, "Uniform")
-	# 	ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
-	# 	plt.show()
-
-
 def main():
 	N = int(sys.argv[1])
 	T = float(sys.argv[2])
 	dynamics = sys.argv[3]
 	init_state = sys.argv[4]
+	if len(sys.argv) == 6:
+		visualise = sys.argv[5]
 
-	IsingModel(N,T,dynamics,init_state).Visualise()
-	exp = Experiments(N,dynamics)
-	# exp.Visualise()
-	Energy, Magnetisation, C, Chi =  exp.vary_T()
+		if visualise == "Visualise":
+			IsingModel(N,T,dynamics,init_state).Visualise()
+			# IsingModel(N,T,dynamics,init_state).Visualise()
+		else:
+			print "Input Error"
+			exit()
+	else:
+		# Energy, Magnetisation, C, Chi =  exp.vary_T()
 
-	#
-	date_time = str(datetime.datetime.now())
-	# np.savetxt(str("Data/Energy " + date_time +  ".txt"), Energy)
-	# np.savetxt(str("Data/Magnetisation " + date_time +  ".txt"), Magnetisation)
-	# np.savetxt(str("Data/Suscepibility " + date_time +  ".txt"), Chi)
-	# np.savetxt(str("Data/Heat Capacity " + date_time +  ".txt"), C)
-	#
-	#
-	np.savetxt("Data/C_Error" + date_time +  ".txt", exp.get_error(Energy, exp.get_C))
-	np.savetxt("Data/Chi_Error" + date_time +  ".txt", exp.get_error(Magnetisation, exp.get_Chi))
+		exp = Experiments(N,dynamics)
+		Energy, Magnetisation, C, Chi =  exp.vary_T()
+
+
+		date_time = str(datetime.datetime.now())
+
+		np.savetxt(str("Data/Energy " + str(dynamics) + date_time +  ".txt"), Energy)
+		np.savetxt(str("Data/Magnetisation "+ str(dynamics) + date_time +  ".txt"), Magnetisation)
+		np.savetxt(str("Data/Suscepibility "+ str(dynamics) + date_time +  ".txt"), Chi)
+		np.savetxt(str("Data/Heat Capacity "+ str(dynamics) + date_time +  ".txt"), C)
+
+		np.savetxt("Data/C_Error"+ str(dynamics) + date_time +  ".txt", exp.get_error(Energy, exp.get_C))
+		np.savetxt("Data/Chi_Error"+ str(dynamics) + date_time +  ".txt", exp.get_error(Magnetisation, exp.get_Chi))
 
 main()
