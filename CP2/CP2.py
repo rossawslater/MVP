@@ -16,15 +16,15 @@ class Array(object):
         NN_array =np.roll(np.roll(self.array,shift=-x+1,axis=0),shift=-y+1,axis=1) #returns 3x3 matrix centred on x,y
         return NN_array[:3,:3]
 
-    def initalise_random(self):
-        for x in range(0, self.N):
-			for y in range(0, self.N):
-				self.array[x,y] = np.random.choice([0,1])
-
 class GoL(Array):
     """Game of Life simulation"""
     def __init__(self, N):
         Array.__init__(self,N)
+
+    def initalise_random(self):
+        for x in range(0, self.N):
+			for y in range(0, self.N):
+				self.array[x,y] = np.random.choice([0,1])
 
     def get_NN(self,x,y):
         NN_array = self.get_NN_array(x,y)
@@ -49,6 +49,21 @@ class GoL(Array):
         self.array = np.copy(self.future_array)
         return self.array
 
+    def bee_hive():
+        return np.array([[0,1,0],[1,0,1],[1,0,1],[0,1,0]])
+
+    def oscillator(self):
+        return np.array([[1],[1],[1]])
+
+    def glider(self):
+        return np.array([[0,1,0],[0,0,1],[1,1,1]])
+
+    def insert(self, state, x,y):
+        temp = np.roll(np.roll(self.array,shift=-x,axis=0),shift=-y,axis=1)
+        temp[0:len(state),0:len(state[0])] = state
+        temp = np.roll(np.roll(temp,shift=x,axis=0),shift=y,axis=1)
+        self.array = np.copy(temp)
+
 class SIRS(Array):
 
     def __init__(self,N, p1, p2, p3):
@@ -56,6 +71,11 @@ class SIRS(Array):
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3
+
+    def initalise_random(self):
+        for x in range(0, self.N):
+			for y in range(0, self.N):
+				self.array[x,y] = np.random.choice([-1,0,1])
 
     def update(self):
         self.future_array = np.copy(self.array)
@@ -67,17 +87,13 @@ class SIRS(Array):
 
     def future_state(self, i,j, current_state, NNs):
         r = np.random.rand()
-        # if current_state == 1 and isin(1,self.array) == True:
         if 1 in NNs:
-            print "infected Neighbour"
             if r < self.p1:
                 self.future_array[i,j] = 0
         if current_state == 0:
-            print ""
             if r < self.p2:
                 self.future_array[i,j] = -1
         if current_state == -1:
-            print ""
             if r < self.p3:
                 self.future_array[i,j] = 1
 
@@ -88,7 +104,6 @@ class Visualise():
         self.show()
 
     def updatePlot(self,i): #function updates plot every 10 sweeps, as like measurements
-		# self.func()
 		self.plotFigure.clear()# Clear the old plot
 		plt.imshow(self.func(), interpolation = "nearest")#, cmap = "binary")# Make the new plot
 		plt.axis('off')
@@ -98,16 +113,15 @@ class Visualise():
 		plt.show()
 
 def main():
-    # array = Array(50)
-    # array.get_NN_array(5,5)
-    # x = GoL(50)
+    x = GoL(50)
     # x.initalise_random()
-    y = SIRS(50,0.5,0.5,0.5)
-    y.initalise_random()
-    # print x.update()
-    # x.Visualise()
-    Visualise(y.update)
-    # print x.get_NN_array(5,5)
-    # print x.get_NN(5,5)
+    x.insert(x.bee_hive(),5,25)
+    x.insert(x.oscillator(),35,12)
+    x.insert(x.glider(), 25, 25)
+    Visualise(x.update)
+
+    # y = SIRS(50,0.5,0.5,0.5)
+    # y.initalise_random()
+    # Visualise(y.update)
 
 main()
