@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+# from Array import *
 
 class Array(object):
     """Class to manage the NxN Array"""
@@ -28,9 +29,10 @@ class GoL(Array):
 
     def get_NN(self,x,y):
         NN_array = self.get_NN_array(x,y)
-        return np.sum(NN_array) - NN_array[1,1] #sums all Nearest Neighbours
+        return np.sum(NN_array) - NN_array[1,1] #sums all Nearest Neighbours of central element
 
-    def future_state(self,i,j,current_state,NNs): #just call current_state in funcion?
+    def future_state(self,i,j,NNs): #just call current_state in funcion?
+        current_state = self.array[i,j]
         if current_state == 1:
             if NNs <2:
                 self.future_array[i,j] = 0
@@ -45,18 +47,15 @@ class GoL(Array):
         self.future_array = np.copy(self.array)
         for i in range(self.N):
             for j in range(self.N):
-                self.future_state(i,j,self.array[i,j],self.get_NN(i,j))
+                self.future_state(i,j,self.get_NN(i,j))
         self.array = np.copy(self.future_array)
         return self.array
 
-    def bee_hive():
-        return np.array([[0,1,0],[1,0,1],[1,0,1],[0,1,0]])
+    bee_hive = np.array([[0,1,0],[1,0,1],[1,0,1],[0,1,0]])
 
-    def oscillator(self):
-        return np.array([[1],[1],[1]])
+    oscillator = np.array([[1],[1],[1]])
 
-    def glider(self):
-        return np.array([[0,1,0],[0,0,1],[1,1,1]])
+    glider = np.array([[0,1,0],[0,0,1],[1,1,1]])
 
     def insert(self, state, x,y):
         temp = np.roll(np.roll(self.array,shift=-x,axis=0),shift=-y,axis=1)
@@ -81,13 +80,14 @@ class SIRS(Array):
         self.future_array = np.copy(self.array)
         for i in range(self.N):
             for j in range(self.N):
-                self.future_state(i,j,self.array[i,j],self.get_NN_array(i,j))
+                self.future_state(i,j,self.get_NN_array(i,j))
         self.array = np.copy(self.future_array)
         return self.array
 
-    def future_state(self, i,j, current_state, NNs):
+    def future_state(self, i,j, NNs):
+        current_state = self.array[i,j]
         r = np.random.rand()
-        if 1 in NNs:
+        if 0 in NNs:
             if r < self.p1:
                 self.future_array[i,j] = 0
         if current_state == 0:
@@ -113,15 +113,17 @@ class Visualise():
 		plt.show()
 
 def main():
-    x = GoL(50)
-    # x.initalise_random()
-    x.insert(x.bee_hive(),5,25)
-    x.insert(x.oscillator(),35,12)
-    x.insert(x.glider(), 25, 25)
-    Visualise(x.update)
+    # x = GoL(50)
+    # x.insert(x.bee_hive,5,25)
+    # x.insert(x.oscillator,35,12)
+    # x.insert(x.glider, 25, 25)
+    # Visualise(x.update)
 
-    # y = SIRS(50,0.5,0.5,0.5)
+    y = SIRS(50,0.75,0.75,0.75)
     # y.initalise_random()
-    # Visualise(y.update)
+    y.array = np.ones((y.N,y.N))
+    y.array[24,24] = 0
+
+    Visualise(y.update)
 
 main()
