@@ -1,37 +1,83 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 class Array(object):
-    """Class to manage NxN Array"""
+    """Class to manage the NxN Array"""
     def __init__(self, N):
         self.N = N
         self.make_array()
 
     def make_array(self):
         self.array = np.zeros((self.N,self.N))
+        return self.array
 
-    def find_NN(self,x,y):
-        NN_array = np.zeros(9)
-        NN_array[0] = (self.array[x - 1,y - 1])
-        NN_array[1] =(self.array[x - 1, y])
-        NN_array[2] =(self.array[x - 1,y + 1])
-        NN_array[3] =(self.array[x ,y -1])
-        NN_array[4] =(self.array[x ,y])
-        NN_array[5] =(self.array[x ,y + 1])
-        NN_array[6] =(self.array[x + 1,y-1])
-        NN_array[7] =(self.array[x + 1,y])
-        NN_array[8] =(self.array[x + 1,y + 1])
-        NN_array.shape = (3,3)
-        print NN_array
-        return NN_array
+    def get_NN_array(self,x,y):
+        NN_array =np.roll(np.roll(self.array,shift=-x+1,axis=0),shift=-y+1,axis=1) #returns 3x3 matrix centred on x,y
+        return NN_array[:3,:3]
 
-class GoL():
+class GoL(Array):
     """Game of Life simulation"""
     def __init__(self, N):
-        super().__init__(N)
-        self.arg = arg
+        Array.__init__(self,N)
+
+    def initalise_random(self):
+        for x in range(0, self.N):
+			for y in range(0, self.N):
+				self.array[x,y] = np.random.choice([0,1])
+
+    def get_NN(self,x,y):
+        NN_array = self.get_NN_array(x,y)
+        return np.sum(NN_array) - NN_array[1,1] #sums all Nearest Neighbours
+
+    def future_state(self,i,j,current_state,NNs):
+        if current_state == 1:
+            if NNs <2:
+                self.future_array[i,j] = 0
+            if 2<= NNs <= 3:
+                self.future_array[i,j] = 1
+            if NNs > 3:
+                self.future_array[i,j] = 0
+        elif current_state == 0 and NNs == 3:
+            self.future_array[i,j] = 1
+
+    def update(self):
+        self.future_array = np.copy(self.array)
+        for i in range(self.N):
+            for j in range(self.N):
+                self.future_state(i,j,self.array[i,j],self.get_NN(i,j))
+        self.array = np.copy(self.future_array)
+        return self.array
+class SIRS(Array):
+
+    def __init__(self,N):
+        Array.__init__(self,N)
+
+class Visualise():
+    def __init__(self, func):
+        self.func = func
+        self.plotFigure = plt.figure()
+        self.show()
+
+    def updatePlot(self,i): #function updates plot every 10 sweeps, as like measurements
+		# self.func()
+		self.plotFigure.clear()# Clear the old plot
+		plt.imshow(self.func(), interpolation = "nearest", cmap = "binary")# Make the new plot
+		plt.axis('off')
+
+    def show(self):# Function that runs the animaion
+		ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
+		plt.show()
 
 def main():
-    array = Array(50)
-    array.find_NN(5,5)
+    # array = Array(50)
+    # array.get_NN_array(5,5)
+    x = GoL(50)
+    x.initalise_random()
+    # print x.update()
+    # x.Visualise()
+    Visualise(x.update)
+    # print x.get_NN_array(5,5)
+    # print x.get_NN(5,5)
 
 main()
