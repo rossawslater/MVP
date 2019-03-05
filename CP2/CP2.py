@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from scipy import ndimage
 # from Array import *
 
 class Array(object):
@@ -42,6 +43,9 @@ class GoL(Array):
                 self.future_array[i,j] = 0
         elif current_state == 0 and NNs == 3:
             self.future_array[i,j] = 1
+
+    def get_CoM(self):
+        return ndimage.measurements.center_of_mass(self.array)
 
     def update(self):
         self.future_array = np.copy(self.array)
@@ -97,32 +101,34 @@ class SIRS(Array):
             if r < self.p3:
                 self.future_array[i,j] = 1
 
-class Visualise():
-    def __init__(self, func):
-        self.func = func
-        self.plotFigure = plt.figure()
-        self.show()
-
-    def updatePlot(self,i): #function updates plot every 10 sweeps, as like measurements
-		self.plotFigure.clear()# Clear the old plot
-		plt.imshow(self.func(), interpolation = "nearest")#, cmap = "binary")# Make the new plot
-		plt.axis('off')
-
-    def show(self):# Function that runs the animaion
-		ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
-		plt.show()
+# class Visualise():
+#     def __init__(self, func):
+#         self.func = func
+#         self.plotFigure = plt.figure()
+#         self.show()
+#
+#     def updatePlot(self,i): #function updates plot every 10 sweeps, as like measurements
+# 		self.plotFigure.clear()# Clear the old plot
+# 		plt.imshow(self.func(), interpolation = "nearest")#, cmap = "binary")# Make the new plot
+#         plt.axis('off')
+#
+#     def show(self):# Function that runs the animaion
+# 		ani = animation.FuncAnimation(self.plotFigure, self.updatePlot)
+# 		plt.show()
 
 def main():
-    # x = GoL(50)
-    # x.insert(x.bee_hive,5,25)
-    # x.insert(x.oscillator,35,12)
-    # x.insert(x.glider, 25, 25)
+    x = GoL(50)
+    x.insert(x.bee_hive,5,25)
+    x.insert(x.oscillator,35,12)
+    x.insert(x.glider, 25, 25)
     # Visualise(x.update)
-
-    y = SIRS(50,0.75,0.75,0.75)
-    # y.initalise_random()
-    y.array = np.ones((y.N,y.N))
-    y.array[24,24] = 0
+    while True:
+        x.update()
+        print x.get_CoM()
+    # y = SIRS(50,0.75,0.75,0.75)
+    # # y.initalise_random()
+    # y.array = np.ones((y.N,y.N))
+    # y.array[24,24] = 0
 
     Visualise(y.update)
 
