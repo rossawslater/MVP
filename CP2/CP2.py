@@ -19,9 +19,15 @@ class Array(object):
         NN_array = np.roll(np.roll(self.array,shift=-x+1,axis=0),shift=-y+1,axis=1) #returns 3x3 matrix centred on x,y
         return NN_array[:3,:3]
 
+    # def get_plus_NNs(self,x,y):
+    #     NNs = self.get_NN_array(x,y)
+    #     return [NNs[0,1], NNs[1,0], NNs[1,2], NNs[2,1]]
+
     def get_plus_NNs(self,x,y):
-        NNs = self.get_NN_array(x,y)
-        return [NNs[0,1], NNs[1,0], NNs[1,2], NNs[2,1]]
+        # if abs(i_x-j_x) == 1 or abs(i_y-j_y) == 1 or (i_x-j_x)%self.N-1 == 0 or (i_y-j_y)%self.N-1 == 0:
+        #
+        # x + 1 %self.N, y + 1 % self.N, (x - 1 = =1 s0 fine), (y - 1 = -1 so fine)
+        return [self.array[(x + 1)%self.N, y],self.array[x, (y + 1)%self.N],self.array[x-1, y],self.array[x, y-1]]
 
     def get_x_y(self):
 		return np.random.randint(0,self.N), np.random.randint(0,self.N)
@@ -75,26 +81,27 @@ class GoL(Array):
         self.array = np.copy(temp)
 
 class SIRS(Array):
-    #0 is Susceptible, 1 is infected, 2 is recovered
-    def __init__(self, N, p1, p2, p3):
+    #0 is Susceptible, 1 is infected, 2 is recovered, 3 is immune
+    def __init__(self, N, p1, p2, p3, immunity = False):
         Array.__init__(self,N)
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3
+        self.immunity = immunity
         self.initalise_random()
 
     def initalise_random(self):
-		self.array = np.random.choice([0,1,2], (self.N, self.N))
+        if self.immunity:
+            self.array = np.random.choice([0,1,2,3], (self.N, self.N), )
+        else:
+            self.array = np.random.choice([0,1,2], (self.N, self.N))
 
     def initalise_uniform(self):
         self.array[self.N/2,self.N/2] = 1
 
     def update(self):
-        # for sweep in range(1):
-        for i in range(self.N**2):
-
-            i,j = self.get_x_y()
-            self.future_state(i,j)
+        i,j = self.get_x_y()
+        self.future_state(i,j)
         return self.array
 
     def future_state(self,i,j):
