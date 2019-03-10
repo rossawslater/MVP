@@ -43,12 +43,12 @@ class Experiments():
 						# print sweep/self.sweeps_per_measurement
 						I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 						# print I_list
-				self.I_frac[P1/self.step, P3/self.step] = np.mean(I_list)/self.N
+				self.I_frac[P1/self.step, P3/self.step] = np.mean(I_list)/self.N**2
 				# print I_list**2
-				# var = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
-				# print var
-				self.I_var[P1/self.step, P3/self.step] = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
-
+				var = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
+				print var
+				self.I_var[P1/self.step, P3/self.step] = var# (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
+		print self.I_var
 		np.savetxt(str("Data/Vary_P1_P3_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_P1_P3_Var_" + str(self.step)  + ".txt"), self.I_var)
 		return self.I_frac, self.I_var, self.P1_vals, self.P3_vals
@@ -81,13 +81,18 @@ class Experiments():
 				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
-			self.I_frac[step] = np.mean(I_list)/self.N
-			self.I_var [step] = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
+			self.I_frac[step] = np.mean(I_list)/self.N**2
+			self.I_var[step] = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
 			step +=1
 
 		np.savetxt(str("Data/Vary_P1_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_P1_Var_" + str(self.step)  + ".txt"), self.I_var)
 		return self.I_frac, self.I_var, self.P1_vals
+
+	def immunity(self, min, max, step):
+		self.immunity_fracs = np.arange(min,max,step)
+		for frac in immunity_fracs:
+			sim = SIRS(self.N,0.5,0.5,0.5)
 
 # class Plot():
 # 	def __init__(self):

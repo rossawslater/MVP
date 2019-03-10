@@ -7,7 +7,7 @@ class Plot():
 		self.data = np.loadtxt(file)
 
 	def plot_heatmap(self):
-		plt.imshow(self.data[1:,1:], interpolation = "nearest")
+		plt.imshow(self.data, interpolation = "nearest")
 		plt.gca().invert_yaxis()
 		plt.colorbar()
 		plt.show()
@@ -17,6 +17,6 @@ class Plot():
 		plt.show()
 
 def main():
-	Plot("Data/Vary_P1_P3_Var_0.2.txt").plot_heatmap()
+	Plot("Data/Vary_P1_P3_Var_0.05.txt").plot_heatmap()
 	# Plot("Data/Vary_P1_0.05.txt").plot_graph()
 main()
