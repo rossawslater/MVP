@@ -19,9 +19,15 @@ class Array(object):
         NN_array = np.roll(np.roll(self.array,shift=-x+1,axis=0),shift=-y+1,axis=1) #returns 3x3 matrix centred on x,y
         return NN_array[:3,:3]
 
+    # def get_plus_NNs(self,x,y):
+    #     NNs = self.get_NN_array(x,y)
+    #     return [NNs[0,1], NNs[1,0], NNs[1,2], NNs[2,1]]
+
     def get_plus_NNs(self,x,y):
-        NNs = self.get_NN_array(x,y)
-        return [NNs[0,1], NNs[1,0], NNs[1,2], NNs[2,1]]
+        # if abs(i_x-j_x) == 1 or abs(i_y-j_y) == 1 or (i_x-j_x)%self.N-1 == 0 or (i_y-j_y)%self.N-1 == 0:
+        #
+        # x + 1 %self.N, y + 1 % self.N, (x - 1 = =1 s0 fine), (y - 1 = -1 so fine)
+        return [self.array[x + 1 %self.N-1, y],self.array[x, y + 1 %self.N-1],self.array[x-1, y],self.array[x, y-1]]
 
     def get_x_y(self):
 		return np.random.randint(0,self.N), np.random.randint(0,self.N)
