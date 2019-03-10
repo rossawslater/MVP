@@ -75,23 +75,25 @@ class GoL(Array):
         self.array = np.copy(temp)
 
 class SIRS(Array):
-    #0 is Susceptible, 1 is infected, 2 is recovered
-    def __init__(self, N, p1, p2, p3):
+    #0 is Susceptible, 1 is infected, 2 is recovered, 3 is immune
+    def __init__(self, N, p1, p2, p3, immunity = False):
         Array.__init__(self,N)
         self.p1 = p1
         self.p2 = p2
         self.p3 = p3
+        self.immunity = immunity
         self.initalise_random()
 
     def initalise_random(self):
-		self.array = np.random.choice([0,1,2], (self.N, self.N))
+        if self.immunity:
+            self.array = np.random.choice([0,1,2,3], (self.N, self.N), )
+        else:
+            self.array = np.random.choice([0,1,2], (self.N, self.N))
 
     def initalise_uniform(self):
         self.array[self.N/2,self.N/2] = 1
 
     def update(self):
-        # for sweep in range(1):
-        # for i in range(self.N**2):
         i,j = self.get_x_y()
         self.future_state(i,j)
         return self.array
