@@ -17,6 +17,6 @@ class Plot():
 		plt.show()
 
 def main():
-	# Plot("Data/Vary_P1_P3_Var_0.1.txt").plot_heatmap()
-	Plot("Data/Vary_P1_0.05.txt").plot_graph()
+	Plot("Data/Vary_P1_P3_0.2.txt").plot_heatmap()
+	# Plot("Data/Vary_P1_0.05.txt").plot_graph()
 main()

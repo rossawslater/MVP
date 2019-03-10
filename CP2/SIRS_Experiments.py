@@ -51,7 +51,7 @@ class Experiments():
 
 		np.savetxt(str("Data/Vary_P1_P3_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_P1_P3_Var_" + str(self.step)  + ".txt"), self.I_var)
-		return self.I_frac, self.I_var
+		return self.I_frac, self.I_var, self.P1_vals, self.P3_vals
 
 	def vary_P1(self, min = 0.2, max = 0.5, step = 0.05, P2_val = 0.5, P3_val = 0.2):
 		self.P1_vals = np.arange(min,max,step)
@@ -64,7 +64,7 @@ class Experiments():
 		self.I_var = np.zeros((len(self.P1_vals)))
 		step = 0
 		for P1 in self.P1_vals:
-			# print P1
+			print P1
 
 			I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
 
@@ -81,11 +81,7 @@ class Experiments():
 				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
-			# print P1/self.step
-			print step
 			self.I_frac[step] = np.mean(I_list)/self.N
-			# var = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
-			# print var
 			self.I_var [step] = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
 			step +=1
 
@@ -102,9 +98,9 @@ class Experiments():
 # 		plt.show()
 
 def main():
-	# I_frac, I_var = Experiments(50, 100, 1000, 10).vary_P1_P3(step = 0.2)
+	I_frac, I_var, P1_vals, P3_vals = Experiments(50, 100, 1000, 10).vary_P1_P3(step = 0.05)
 	#cut
-	I_frac, I_var, P1_vals = Experiments(50, 100, 1000, 10).vary_P1(step = 0.05)
+	# I_frac, I_var, P1_vals = Experiments(50, 100, 1000, 10).vary_P1(step = 0.05)
 	# Plot().plot_heatmap(data)
 
 main()
