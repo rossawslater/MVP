@@ -10,7 +10,7 @@ class Experiments():
 		self.equlibrium_sweeps = equlibrium_sweeps
 		self.measurement_len = measurement_len
 		self.sweeps_per_measurement = sweeps_per_measurement
-		self.sweep = self.N **2
+		# self.sweep = self.N **2
 
 	def get_I(self,array): #sum infected sites in array
 		return np.sum(array == 1)
@@ -31,12 +31,12 @@ class Experiments():
 				self.sim = SIRS(self.N,P1,self.P2_val,P3)
 
 				for sweep in range(self.equlibrium_sweeps):
-					for i in range(self.sweep):
-						self.sim.update()
+					# for i in range(self.sweep):
+					self.sim.update()
 
 				for sweep in range(self.measurement_len):
-					for i in range(self.sweep):
-						self.sim.update()
+					# for i in range(self.sweep):
+					self.sim.update()
 
 					if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
 						# I_list.append(self.get_I(self.sim.array))
@@ -71,12 +71,12 @@ class Experiments():
 			self.sim = SIRS(self.N,P1,self.P2_val,self.P3_val)
 
 			for sweep in range(self.equlibrium_sweeps):
-				for i in range(self.sweep):
-					self.sim.update()
+				# for i in range(self.sweep):
+				self.sim.update()
 
 			for sweep in range(self.measurement_len):
-				for i in range(self.sweep):
-					self.sim.update()
+				# for i in range(self.sweep):
+				self.sim.update()
 
 				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
@@ -89,10 +89,29 @@ class Experiments():
 		np.savetxt(str("Data/Vary_P1_Var_" + str(self.step)  + ".txt"), self.I_var)
 		return self.I_frac, self.I_var, self.P1_vals
 
-	def immunity(self, min, max, step):
-		self.immunity_fracs = np.arange(min,max,step)
+	def vary_immunity(self, min = 0, max = 1, step = 0.05):
+		immunity_fracs = np.arange(min,max,step)
+		self.I_frac = np.zeros((len(immunity_fracs)))
+		self.step = step
 		for frac in immunity_fracs:
-			sim = SIRS(self.N,0.5,0.5,0.5)
+			print frac
+			I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
+
+			self.sim = SIRS(self.N,0.5,0.5,0.5,frac)
+
+			for sweep in range(self.equlibrium_sweeps):
+				self.sim.update()
+
+			for sweep in range(self.measurement_len):
+				self.sim.update()
+
+				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
+					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
+
+			self.I_frac[step] = np.mean(I_list)/self.N**2
+		np.savetxt(str("Data/Vary_Immune_" + str(self.step)  + ".txt"), self.I_frac)
+		return self.I_frac, immunity_fracs
+
 
 # class Plot():
 # 	def __init__(self):
@@ -103,9 +122,10 @@ class Experiments():
 # 		plt.show()
 
 def main():
-	I_frac, I_var, P1_vals, P3_vals = Experiments(50, 100, 1000, 10).vary_P1_P3(step = 0.05)
+	# I_frac, I_var, P1_vals, P3_vals = Experiments().vary_P1_P3(step = 0.05)
 	#cut
-	# I_frac, I_var, P1_vals = Experiments(50, 100, 1000, 10).vary_P1(step = 0.05)
+	# I_frac, I_var, P1_vals = Experiments().vary_P1(step = 0.05)
 	# Plot().plot_heatmap(data)
+	I_frac, immunity_fracs = Experiments().vary_immunity()
 
 main()
