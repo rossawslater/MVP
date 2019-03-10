@@ -91,10 +91,9 @@ class SIRS(Array):
 
     def update(self):
         # for sweep in range(1):
-        for i in range(self.N**2):
-
-            i,j = self.get_x_y()
-            self.future_state(i,j)
+        # for i in range(self.N**2):
+        i,j = self.get_x_y()
+        self.future_state(i,j)
         return self.array
 
     def future_state(self,i,j):
