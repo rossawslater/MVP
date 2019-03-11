@@ -59,7 +59,7 @@ class GoL(Array):
     def get_CoM(self):
         return ndimage.measurements.center_of_mass(self.array)
 
-    def update(self):
+    def update(self): #self.sweep?
         self.future_array = np.copy(self.array)
         for i in range(self.N):
             for j in range(self.N):
@@ -92,16 +92,20 @@ class SIRS(Array):
 
     def initalise_random(self):
         if self.immunity:
-            self.array = np.random.choice([0,1,2,3], (self.N, self.N), )
+            # print "Immune"
+            p = (1-self.immunity)/3
+            self.array = np.random.choice([0,1,2,3], (self.N, self.N), p=[p,p,p,self.immunity])
         else:
+            # print "no immunity"
             self.array = np.random.choice([0,1,2], (self.N, self.N))
 
     def initalise_uniform(self):
         self.array[self.N/2,self.N/2] = 1
 
     def update(self):
-        i,j = self.get_x_y()
-        self.future_state(i,j)
+        for i in range(self.N**2):
+            i,j = self.get_x_y()
+            self.future_state(i,j)
         return self.array
 
     def future_state(self,i,j):
@@ -124,6 +128,9 @@ class SIRS(Array):
             if r <= self.p3:
                 self.array[i,j] = 0
 
+        elif current_state == 3:
+            pass
+
 class Visualise():
     def __init__(self, func):
         self.func = func
@@ -141,19 +148,19 @@ class Visualise():
 		plt.show()
 
 def main():
-    model = sys.argv[1]
-    N = sys.argv[2]
-
-    if model == "GOL":
-        init_state = sys.argv[3]
-        # sys.argv =
-
-    elif model == "SIRS":
-        p1 = sys.argv[3]
-        p2 = sys.argv[4]
-        p3 = sys.argv[5]
-
-    # x = GoL(50)
+    # model = sys.argv[1]
+    # N = sys.argv[2]
+    #
+    # if model == "GOL":
+    #     init_state = sys.argv[3]
+    #     # sys.argv =
+    #
+    # elif model == "SIRS":
+    #     p1 = sys.argv[3]
+    #     p2 = sys.argv[4]
+    #     p3 = sys.argv[5]
+    #
+    # # x = GoL(50)
     # # x.initalise_random()
     # # x.show()
     # # x.insert(x.bee_hive,5,25)
@@ -167,9 +174,9 @@ def main():
     # Visualise(x.update)
 
     # y = SIRS(50,0.6,0.25,0.15)
-    y = SIRS(50,0.8,0.1,0.012)
-    y.initalise_uniform()
-    y.initalise_random()
+    y = SIRS(50,0.5,0.5,0.5)
+    # y.initalise_uniform()
+    # y.initalise_random()
     Visualise(y.update)
 
 # main()

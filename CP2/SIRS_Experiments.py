@@ -22,9 +22,10 @@ class Experiments():
 		self.step = step
 		self.I_frac = np.zeros((len(self.P1_vals), len(self.P3_vals)))
 		self.I_var = np.zeros((len(self.P1_vals), len(self.P3_vals)))
+
 		for P1 in self.P1_vals:
 			for P3 in self.P3_vals:
-				print P1, P3
+				print (P1, P3)
 
 				I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
 
@@ -39,16 +40,17 @@ class Experiments():
 					self.sim.update()
 
 					if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
-						# I_list.append(self.get_I(self.sim.array))
-						# print sweep/self.sweeps_per_measurement
+
 						I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
-						# print I_list
-				self.I_frac[P1/self.step, P3/self.step] = np.mean(I_list)/self.N**2
-				# print I_list**2
-				var = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
-				print var
-				self.I_var[P1/self.step, P3/self.step] = var# (np.mean(I_list**2) - np.mean(I_list)**2)/self.N
-		print self.I_var
+
+				self.I_frac[P1/self.step, P3/self.step] = float(np.mean(I_list))/self.N**2
+				print(self.I_frac[P1/self.step, P3/self.step])
+				var = float((np.mean(I_list**2) - np.mean(I_list)**2))/self.N**2
+				print (var)
+				self.I_var[P1/self.step, P3/self.step] = var# (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
+
+		print (self.I_var)
+
 		np.savetxt(str("Data/Vary_P1_P3_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_P1_P3_Var_" + str(self.step)  + ".txt"), self.I_var)
 		return self.I_frac, self.I_var, self.P1_vals, self.P3_vals
@@ -59,12 +61,12 @@ class Experiments():
 		self.P3_val = P3_val
 		self.step = step
 		self.I_frac = np.zeros((len(self.P1_vals)))
-		# print len(self.I_frac)
-		# print self.I_frac
 		self.I_var = np.zeros((len(self.P1_vals)))
+
 		step = 0
+
 		for P1 in self.P1_vals:
-			print P1
+			print (P1)
 
 			I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
 
@@ -81,20 +83,24 @@ class Experiments():
 				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
-			self.I_frac[step] = np.mean(I_list)/self.N**2
-			self.I_var[step] = (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
+			self.I_frac[step] = float(np.mean(I_list))/self.N**2
+			self.I_var[step] = float(np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
+
 			step +=1
 
 		np.savetxt(str("Data/Vary_P1_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_P1_Var_" + str(self.step)  + ".txt"), self.I_var)
+
 		return self.I_frac, self.I_var, self.P1_vals
 
 	def vary_immunity(self, min = 0, max = 1, step = 0.05):
 		immunity_fracs = np.arange(min,max,step)
 		self.I_frac = np.zeros((len(immunity_fracs)))
+		self.Error = np.zeros((len(immunity_fracs)))
 		self.step = step
+		step = 0
 		for frac in immunity_fracs:
-			print frac
+			print (frac)
 			I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
 
 			self.sim = SIRS(self.N,0.5,0.5,0.5,frac)
@@ -106,11 +112,18 @@ class Experiments():
 				self.sim.update()
 
 				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
+					print (float(self.get_I(self.sim.array))/self.N**2)
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
-			self.I_frac[step] = np.mean(I_list)/self.N**2
+			self.I_frac[step] = float(np.mean(I_list))/self.N**2
+			self.Error[step] = np.std(I_list)/np.sqrt(len(I_list))
+
+			step += 1
+
 		np.savetxt(str("Data/Vary_Immune_" + str(self.step)  + ".txt"), self.I_frac)
-		return self.I_frac, immunity_fracs
+		np.savetxt(str("Data/Vary_Immune_" + str(self.step)  + "_errors.txt"), self.Error)
+
+		return self.I_frac, immunity_fracs, self.Error
 
 
 # class Plot():
@@ -122,10 +135,10 @@ class Experiments():
 # 		plt.show()
 
 def main():
-	# I_frac, I_var, P1_vals, P3_vals = Experiments().vary_P1_P3(step = 0.05)
+	I_frac, I_var, P1_vals, P3_vals = Experiments().vary_P1_P3(step = 0.05)
 	#cut
 	# I_frac, I_var, P1_vals = Experiments().vary_P1(step = 0.05)
 	# Plot().plot_heatmap(data)
-	I_frac, immunity_fracs = Experiments().vary_immunity()
+	# I_frac, immunity_fracs, Error = Experiments().vary_immunity()
 
 main()
