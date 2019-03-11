@@ -44,18 +44,17 @@ class Experiments():
 						I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
 				self.I_frac[int(P1/self.step), int(P3/self.step)] = float(np.mean(I_list))/self.N**2
-				print(self.I_frac[int(P1/self.step), int(P3/self.step)])
-				var = float((np.mean(I_list**2) - np.mean(I_list)**2))/self.N**2
-				print (var)
-				self.I_var[int(P1/self.step), int(P3/self.step)] = var# (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
-
-		print (self.I_var)
+				# print(self.I_frac[int(P1/self.step), int(P3/self.step)])
+				# var = float((np.mean(I_list**2) - np.mean(I_list)**2))/self.N**2
+				# print (var)
+				self.I_var[int(P1/self.step), int(P3/self.step)] = float((np.mean(I_list**2) - np.mean(I_list)**2))/self.N**2
+		# print (self.I_var)
 
 		np.savetxt(str("Data/Vary_P1_P3_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_P1_P3_Var_" + str(self.step)  + ".txt"), self.I_var)
 		return self.I_frac, self.I_var, self.P1_vals, self.P3_vals
 
-	def vary_P1(self, min = 0.2, max = 0.5, step = 0.05, P2_val = 0.5, P3_val = 0.2):
+	def vary_P1(self, min = 0.2, max = 0.5, step = 0.02, P2_val = 0.5, P3_val = 0.5):
 		self.P1_vals = np.arange(min,max,step)
 		self.P2_val = P2_val
 		self.P3_val = P3_val
@@ -93,7 +92,7 @@ class Experiments():
 
 		return self.I_frac, self.I_var, self.P1_vals
 
-	def vary_immunity(self, min = 0, max = 1, step = 0.05):
+	def vary_immunity(self, min = 0, max = 1, step = 0.01):
 		immunity_fracs = np.arange(min,max,step)
 		self.I_frac = np.zeros((len(immunity_fracs)))
 		self.Error = np.zeros((len(immunity_fracs)))
@@ -116,7 +115,7 @@ class Experiments():
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
 			self.I_frac[step] = float(np.mean(I_list))/self.N**2
-			self.Error[step] = np.std(I_list)/np.sqrt(len(I_list))
+			self.Error[step] = np.std(I_list)/np.sqrt(len(I_list)) #Standard error on the Mean
 
 			step += 1
 
@@ -135,10 +134,10 @@ class Experiments():
 # 		plt.show()
 
 def main():
-	I_frac, I_var, P1_vals, P3_vals = Experiments().vary_P1_P3(step = 0.05)
-	#cut
-	# I_frac, I_var, P1_vals = Experiments().vary_P1(step = 0.05)
-	# Plot().plot_heatmap(data)
-	# I_frac, immunity_fracs, Error = Experiments().vary_immunity()
+	# I_frac, I_var, P1_vals, P3_vals = Experiments().vary_P1_P3(step = 0.05)
+
+	# I_frac, I_var, P1_vals = Experiments(50,100,10000,10).vary_P1()
+
+	I_frac, immunity_fracs, Error = Experiments(measurement_len = 10000).vary_immunity()
 
 main()
