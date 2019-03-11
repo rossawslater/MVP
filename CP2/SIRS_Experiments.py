@@ -43,11 +43,11 @@ class Experiments():
 
 						I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
-				self.I_frac[P1/self.step, P3/self.step] = float(np.mean(I_list))/self.N**2
-				print(self.I_frac[P1/self.step, P3/self.step])
+				self.I_frac[int(P1/self.step), int(P3/self.step)] = float(np.mean(I_list))/self.N**2
+				print(self.I_frac[int(P1/self.step), int(P3/self.step))
 				var = float((np.mean(I_list**2) - np.mean(I_list)**2))/self.N**2
 				print (var)
-				self.I_var[P1/self.step, P3/self.step] = var# (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
+				self.I_var[int(P1/self.step), int(P3/self.step)] = var# (np.mean(I_list**2) - np.mean(I_list)**2)/self.N**2
 
 		print (self.I_var)
 
