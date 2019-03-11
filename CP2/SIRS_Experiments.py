@@ -15,6 +15,28 @@ class Experiments():
 	def get_I(self,array): #sum infected sites in array
 		return np.sum(array == 1)
 
+	def get_infected_no(self, N, P1, P2, P3):
+		self.sim = SIRS(N,P1,P2,P3)
+		I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
+
+		for sweep in range(self.equlibrium_sweeps):
+			# for i in range(self.sweep):
+			self.sim.update()
+
+		for sweep in range(self.measurement_len):
+			# for i in range(self.sweep):
+			self.sim.update()
+
+			if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
+
+				I_list[sweep/self.sweeps_per_measurement] = float(self.get_I(self.sim.array))/self.N**2
+				print I_list[sweep/self.sweeps_per_measurement]
+		# np.savetxt(str("Data/I_Frac_" + str(P1) + "_"  + str(P2) + "_"  + str(P3) + ".txt"), I_list)
+		plt.plot(I_list)
+		plt.show()
+
+		return I_list
+
 	def vary_P1_P3(self, min = 0, max = 1, step = 0.05, P2_val = 0.5):
 		self.P1_vals = np.arange(min,max,step)
 		self.P2_val = P2_val
@@ -100,18 +122,19 @@ class Experiments():
 		step = 0
 		for frac in immunity_fracs:
 			print (frac)
+
 			I_list = np.zeros(self.measurement_len/self.sweeps_per_measurement)
 
 			self.sim = SIRS(self.N,0.5,0.5,0.5,frac)
 
 			for sweep in range(self.equlibrium_sweeps):
 				self.sim.update()
-
+				
 			for sweep in range(self.measurement_len):
 				self.sim.update()
 
 				if sweep%self.sweeps_per_measurement == 0: #measure every x sweeps
-					print (float(self.get_I(self.sim.array))/self.N**2)
+					# print (float(self.get_I(self.sim.array))/self.N**2)
 					I_list[sweep/self.sweeps_per_measurement] = self.get_I(self.sim.array)
 
 			self.I_frac[step] = float(np.mean(I_list))/self.N**2
@@ -121,17 +144,9 @@ class Experiments():
 
 		np.savetxt(str("Data/Vary_Immune_" + str(self.step)  + ".txt"), self.I_frac)
 		np.savetxt(str("Data/Vary_Immune_" + str(self.step)  + "_errors.txt"), self.Error)
-
+		# np.savetxt(str("Data/Immunity_test" + str(self.step)  + ".txt"), self.I_frac)
+		# np.savetxt(str("Data/Immunity_test" + str(self.step)  + "_errors.txt"), self.Error)
 		return self.I_frac, immunity_fracs, self.Error
-
-
-# class Plot():
-# 	def __init__(self):
-# 		pass
-# 	def plot_heatmap(self,data):
-# 		plt.imshow(data, interpolation = "nearest")
-# 		plt.colorbar()
-# 		plt.show()
 
 def main():
 	# I_frac, I_var, P1_vals, P3_vals = Experiments().vary_P1_P3(step = 0.05)
@@ -139,5 +154,7 @@ def main():
 	# I_frac, I_var, P1_vals = Experiments(50,100,10000,10).vary_P1()
 
 	I_frac, immunity_fracs, Error = Experiments(measurement_len = 10000).vary_immunity()
+
+	# Experiments(measurement_len = 1000).get_infected_no(50, 0.5,0.2,0.1)
 
 main()
